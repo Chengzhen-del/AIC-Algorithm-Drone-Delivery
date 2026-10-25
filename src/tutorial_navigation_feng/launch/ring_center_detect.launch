@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- 启动圆环中心检测节点 -->
+    <node pkg="tutorial_navigation_feng" type="ring_center_detect_node_feng" name="ring_center_detect_node" output="screen">
+        <!-- 设置点云过滤范围参数 -->
+        <param name="x_min" value="4.8" />
+        <param name="x_max" value="7.2" />
+        <param name="y_min" value="-2.0" />
+        <param name="y_max" value="-1.2" />
+        <param name="z_min" value="1.15" />
+        <param name="z_max" value="1.35" />
+        <!-- 设置累积帧数 -->
+        <param name="max_history_size" value="10" />
+    </node>
+</launch> 

@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Local PX4 SITL parameter overrides for tutorial_gazebo.
+# This file is sourced by tutorial_gazebo/px4/init.d-posix/rcS.
+# It replays the QGC-exported snapshot in ../sitl.params as `param set` commands.
+
+if [ -n "$LOCAL_PX4_INIT_DIR" ]; then
+	PARAM_SNAPSHOT_FILE="$LOCAL_PX4_INIT_DIR/../sitl.params"
+else
+	PARAM_SNAPSHOT_FILE="$(CDPATH= cd -- "$(dirname "$0")" && pwd)/../sitl.params"
+fi
+
+if [ -f "$PARAM_SNAPSHOT_FILE" ]; then
+	echo "[param] applying snapshot from $PARAM_SNAPSHOT_FILE"
+
+	while IFS="$(printf '\t')" read -r vehicle_id component_id param_name param_value param_type
+	do
+		case "$vehicle_id" in
+			''|'#'*)
+				continue
+				;;
+		esac
+
+		case "$param_name" in
+			COM_FLIGHT_UUID|LND_FLIGHT_T_HI|LND_FLIGHT_T_LO|MAV_SYS_ID|SDLOG_UUID|SYS_AUTOCONFIG|SYS_AUTOSTART)
+				continue
+				;;
+		esac
+
+		param set "$param_name" "$param_value"
+	done < "$PARAM_SNAPSHOT_FILE"
+fi
+
+# Manual overrides can be added below and will take precedence over sitl.params.
+# Example:
+# param set EKF2_AID_MASK 24

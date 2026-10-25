@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- MAVROS posix SITL environment launch script -->
+    <!-- launches MAVROS, PX4 SITL, Gazebo environment, and spawns vehicle -->
+    <!-- vehicle model and world -->
+    <arg name="est" default="ekf2"/>
+    <arg name="vehicle" default="iris"/>
+    <arg name="sdf" default="$(find tutorial_gazebo)/models/Magpie360-5S/Magpie360-5S.sdf"/>
+
+    <!-- gazebo configs -->
+    <arg name="gui" default="true"/>
+    <arg name="debug" default="false"/>
+    <arg name="verbose" default="false"/>
+    <arg name="paused" default="false"/>
+    <arg name="respawn_gazebo" default="true"/>
+    <!-- MAVROS configs -->
+    <arg name="respawn_mavros" default="false"/>
+    <!-- PX4 configs -->
+    <arg name="interactive" default="true"/>
+    <!-- PX4 SITL and Gazebo -->
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="gui" value="$(arg gui)"/>
+        <!-- <arg name="world_name" value="$(arg world)"/> -->
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="verbose" value="$(arg verbose)"/>
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="respawn_gazebo" value="$(arg respawn_gazebo)"/>
+    </include>
+    <node pkg="tutorial_gazebo" type="model_pose_gt.py" name="model_pose_gt"/>
+    <group ns="iris_0">
+        <arg name="ID" value="0"/>
+        <include file="$(find tutorial_gazebo)/launch/spawn_single.launch">
+            <arg name="ID" value="$(arg ID)"/>
+            <arg name="sdf" value="$(arg sdf)"/>
+            <arg name="interactive" value="$(arg interactive)"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
+            <arg name="frame" value="iris_$(arg ID)"/>
+            <arg name="x" default="2.0"/>
+            <arg name="y" default="0"/>
+            <arg name="z" default="0.185"/>
+            <arg name="R" default="0"/>
+            <arg name="P" default="0"/>
+            <arg name="Y" default="0"/>
+        </include>
+    </group>
+    <group ns="iris_1">
+        <arg name="ID" value="1"/>
+        <include file="$(find tutorial_gazebo)/launch/spawn_single.launch">
+            <arg name="ID" value="$(arg ID)"/>
+            <arg name="sdf" value="$(arg sdf)"/>
+            <arg name="interactive" value="$(arg interactive)"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
+            <arg name="frame" value="iris_$(arg ID)"/>
+            <arg name="x" default="-1.0"/>
+            <arg name="y" default="1.74"/>
+            <arg name="z" default="0.185"/>
+            <arg name="R" default="0"/>
+            <arg name="P" default="0"/>
+            <arg name="Y" default="0"/>
+        </include>
+    </group>
+    <group ns="iris_2">
+        <arg name="ID" value="2"/>
+        <include file="$(find tutorial_gazebo)/launch/spawn_single.launch">
+            <arg name="ID" value="$(arg ID)"/>
+            <arg name="sdf" value="$(arg sdf)"/>
+            <arg name="interactive" value="$(arg interactive)"/>
+            <arg name="vehicle" value="$(arg vehicle)"/>
+            <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
+            <arg name="frame" value="iris_$(arg ID)"/>
+            <arg name="x" default="-1.0"/>
+            <arg name="y" default="-1.74"/>
+            <arg name="z" default="0.185"/>
+            <arg name="R" default="0"/>
+            <arg name="P" default="0"/>
+            <arg name="Y" default="0"/>
+        </include>
+    </group>
+</launch>

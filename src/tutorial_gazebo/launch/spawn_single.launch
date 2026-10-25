@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="ID" default="0"/>
+    <arg name="frame" default=""/>
+    <arg name="sdf"/>
+    <arg name="interactive" default="true"/>
+    <arg name="vehicle"/>
+    <arg name="respawn_mavros" default="true"/>
+    <arg name="x" default="0"/>
+    <arg name="y" default="0"/>
+    <arg name="z" default="0"/>
+    <arg name="R" default="0"/>
+    <arg name="P" default="0"/>
+    <arg name="Y" default="0"/>
+
+    <arg name="fcu_send_port" value="$(eval 14540 + arg('ID'))"/>
+    <arg name="fcu_recv_port" value="$(eval 16540 + arg('ID'))"/>
+    <arg name="fcu_url" default="udp://:$(arg fcu_send_port)@localhost:$(arg fcu_recv_port)"/>
+    <include file="$(find tutorial_gazebo)/launch/single_vehicle_spawn_sdf.launch">
+        <arg name="x" value="$(arg x)"/>
+        <arg name="y" value="$(arg y)"/>
+        <arg name="z" value="$(arg z)"/>
+        <arg name="R" value="$(arg R)"/>
+        <arg name="P" value="$(arg P)"/>
+        <arg name="Y" value="$(arg Y)"/>
+        <arg name="vehicle" value="$(arg vehicle)"/>
+        <arg name="mavlink_udp_port" value="$(eval 14560 + arg('ID'))"/>
+        <arg name="mavlink_tcp_port" value="$(eval 4560 + arg('ID'))"/>
+        <arg name="ID" value="$(arg ID)"/>
+        <arg name="sdf" value="$(arg sdf)"/>
+        <arg name="interactive" value="$(arg interactive)"/>
+        <!--arg name="reference_frame" value="$(arg frame)"/-->
+        <arg name="robot_namespace" value="$(arg frame)"/>
+        <!--arg name="gazebo_namespace" value="$(arg frame)"/-->
+    </include>
+    <remap from="/move_base_simple/goal" to="move_base_simple/goal"/>
+    <remap from="/diagnostics" to="diagnostics"/>
+    <include file="$(find mavros)/launch/px4.launch">
+        <arg name="gcs_url" value=""/>
+        <arg name="fcu_url" value="$(arg fcu_url)"/>
+        <arg name="tgt_system" value="$(eval 1 + arg('ID'))"/>
+        <arg name="tgt_component" value="1"/>
+        <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
+    </include>
+
+    <!-- 如果frame不为空，则发布tf_$(arg frame)_body_to_$(arg frame)_base_link_broadcaster -->
+    <node if="$(eval arg('frame') != '')" pkg="tf" type="static_transform_publisher" name="tf_$(arg frame)_body_to_$(arg frame)_base_link_broadcaster" args="0 0 0 0 0 0 1 $(arg frame)/body $(arg frame)/base_link 100" />
+    <!-- 如果frame为空，则发布tf_body_to_base_link_broadcaster -->
+    <node unless="$(eval arg('frame') != '')" pkg="tf" type="static_transform_publisher" name="tf_body_to_base_link_broadcaster" args="0 0 0 0 0 0 1 body base_link 100" />
+</launch>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+    <arg name="dont_run_mavros" default="$(arg sim)"/>
+    <arg name="run_fast_lio" default="true"/>
+
+    <node pkg="tutorial_basic_feng" type="takeoff_node_feng" name="takeoff_node" output="screen"/>
+    <include file="$(find tutorial_basic_feng)/launch/mavros.launch" unless="$(arg dont_run_mavros)"/>
+    <include file="$(find tutorial_navigation_feng)/launch/mid360.launch" if="$(arg run_fast_lio)"/>
+</launch>

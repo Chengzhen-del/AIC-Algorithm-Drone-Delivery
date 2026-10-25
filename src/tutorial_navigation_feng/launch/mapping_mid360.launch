@@ -1,0 +1,26 @@
+<launch>
+	<arg name="rviz" default="true" />
+
+	<rosparam command="load" file="$(find tutorial_navigation_feng)/config/mid360.yaml" />
+
+	<param name="feature_extract_enable" type="bool" value="0"/>
+        <!-- 精度调优（原为上游默认 3/0.5/0.5）：更收敛的配准、更细的地图，
+             代价是 CPU 上升，实飞前先用 top 看 laserMapping 占用是否可接受。 -->
+        <param name="point_filter_num" type="int" value="3"/>
+        <param name="max_iteration" type="int" value="5" />
+        <param name="filter_size_surf" type="double" value="0.3" />
+        <param name="filter_size_map" type="double" value="0.3" />
+	<param name="cube_side_length" type="double" value="1000" />
+	<param name="runtime_pos_log_enable" type="bool" value="0" />
+	<node pkg="fast_lio" type="fastlio_mapping" name="laserMapping" output="screen">
+		<remap from="/path" to="path"/>
+		<remap from="/Laser_map" to="Laser_map"/>
+		<remap from="/Odometry" to="Odometry"/>
+		<remap from="/cloud_effected" to="cloud_effected"/>
+		<remap from="/cloud_registered" to="cloud_registered"/>
+		<remap from="/cloud_registered_body" to="cloud_registered_body"/>
+	</node>
+	<group if="$(arg rviz)">
+	<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find tutorial_navigation_feng)/rviz_cfg/loam_livox.rviz" />
+	</group>
+</launch>

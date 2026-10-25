@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="working_altitude" default="1.45"/>
+    <arg name="drop_altitude" default="0.05"/>
+    <arg name="circle_laps" default="10"/>
+    <arg name="pubImg" default="false"/>
+    <arg name="run_viewer" default="false"/>
+
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+    <arg name="run_mavros" default="$(eval not arg('sim'))"/>
+    <arg name="run_catapult_driver" default="$(eval not arg('sim'))"/>
+    <arg name="run_camera_driver" default="$(eval not arg('sim'))"/>
+
+    <arg name="run_fast_lio" default="true"/>
+    <arg name="run_control_node" default="true"/>
+    
+    <include file="$(find tutorial_vision)/launch/center_red_dot_distance_node.launch">
+        <arg name="run_driver" value="false"/>
+        <arg name="show_image" value="false"/>
+    </include>
+    <include file="$(find tutorial_navigation)/launch/ring_center_detect.launch"/>
+    <include file="$(find tutorial_basic)/launch/mavros.launch" if="$(arg run_mavros)"/>
+    <include file="$(find tutorial_navigation)/launch/mid360.launch" if="$(arg run_fast_lio)"/>
+    <include file="$(find tutorial_catapult)/launch/catapult_driver.launch" if="$(arg run_catapult_driver)"/>
+    <include file="$(find tutorial_vision)/launch/simple_camera_driver.launch" if="$(arg run_camera_driver)"/>
+
+    <node pkg="tutorial_all_feng" type="run_aic2025.py" name="run_aic2025" output="screen" if="$(arg run_control_node)">
+        <!-- Flight parameters -->
+        <param name="fly_height" value="$(arg working_altitude)" />
+        <param name="circle_count" value="$(arg circle_laps)" />
+        <param name="drop_altitude" value="$(arg drop_altitude)" />
+        
+        <!-- Drop point circle configuration (which circle to drop at each point) -->
+        <param name="drop_point1_circle" value="10" />  <!-- Drop at point 1 during circle 1 -->
+        <param name="drop_point2_circle" value="10" />  <!-- Drop at point 2 during circle 1 -->
+        <param name="drop_point3_circle" value="10" />  <!-- Drop at point 3 during circle 2 -->
+        <param name="drop_point4_circle" value="10" />  <!-- Drop at point 4 during circle 2 -->
+        
+        <!-- Drop item configuration (which servo to use at each drop point) -->
+        <!-- front_left, front_right, back_left, back_right -->
+        <param name="drop_point1_item" value="front_left" />
+        <param name="drop_point2_item" value="front_right" />
+        <param name="drop_point3_item" value="back_left" />
+        <param name="drop_point4_item" value="back_right" />
+
+        <param name="front_left_offset_x" value="-0.115" />
+        <param name="front_left_offset_y" value="-0.03" />
+        <param name="front_right_offset_x" value="-0.115" />
+        <param name="front_right_offset_y" value="0.03" />
+        <param name="back_left_offset_x" value="-0.065" />
+        <param name="back_left_offset_y" value="-0.03" />
+        <param name="back_right_offset_x" value="-0.065" />
+        <param name="back_right_offset_y" value="0.03" />
+    </node>
+    <node pkg="smach_viewer" type="smach_viewer.py" name="smach_viewer" if="$(arg run_viewer)"/>
+</launch>

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot name="Magpie360-5S">
+  <material name="dark_grey">
+    <color rgba="0.25 0.25 0.25 1.0"/>
+  </material>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 -1.5708"/>
+      <geometry>
+        <mesh filename="package://tutorial_gazebo/models/Magpie360-5S/meshes/Magpie360-5S.obj" scale="1 1 1"/>
+      </geometry>
+      <material name="dark_grey"/>
+    </visual>
+  </link>
+</robot>

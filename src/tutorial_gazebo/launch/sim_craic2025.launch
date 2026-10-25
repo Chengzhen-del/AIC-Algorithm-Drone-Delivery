@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- MAVROS posix SITL environment launch script -->
+    <!-- launches MAVROS, PX4 SITL, Gazebo environment, and spawns vehicle -->
+    <!-- vehicle model and world -->
+    <arg name="est" default="ekf2"/>
+    <arg name="vehicle" default="iris"/>
+    <arg name="world" default="$(find tutorial_gazebo)/worlds/craic2025.world"/>
+    <arg name="sdf" default="$(find tutorial_gazebo)/models/Magpie360-5S/Magpie360-5S.sdf"/>
+    <param name="robot_description" textfile="$(find tutorial_gazebo)/models/Magpie360-5S/Magpie360-5S.urdf"/>
+
+    <!-- gazebo configs -->
+    <arg name="gui" default="true"/>
+    <arg name="debug" default="false"/>
+    <arg name="verbose" default="false"/>
+    <arg name="paused" default="false"/>
+    <arg name="respawn_gazebo" default="true"/>
+    <!-- MAVROS configs -->
+    <arg name="respawn_mavros" default="false"/>
+    <!-- PX4 configs -->
+    <arg name="interactive" default="true"/>
+    <!-- PX4 SITL and Gazebo -->
+
+    <remap from="/iris_0/livox/lidar" to="/livox/lidar"/>
+    <remap from="/iris_0/livox/imu" to="/livox/imu"/>
+    <remap from="/iris_0/camera/camera_info" to="/camera/camera_info"/>
+    <remap from="/iris_0/camera/image_raw" to="/camera/image_raw"/>
+    <remap from="/iris_0/camera/image_raw/compressed" to="/camera/image_raw/compressed"/>
+    <remap from="/iris_0/camera/image_raw/compressed/parameter_descriptions" to="/camera/image_raw/compressed/parameter_descriptions"/>
+    <remap from="/iris_0/camera/image_raw/compressed/parameter_updates" to="/camera/image_raw/compressed/parameter_updates"/>
+    <remap from="/iris_0/camera/image_raw/compressedDepth" to="/camera/image_raw/compressedDepth"/>
+    <remap from="/iris_0/camera/image_raw/compressedDepth/parameter_descriptions" to="/camera/image_raw/compressedDepth/parameter_descriptions"/>
+    <remap from="/iris_0/camera/image_raw/compressedDepth/parameter_updates" to="/camera/image_raw/compressedDepth/parameter_updates"/>
+    <remap from="/iris_0/camera/image_raw/theora" to="/camera/image_raw/theora"/>
+    <remap from="/iris_0/camera/image_raw/theora/parameter_descriptions" to="/camera/image_raw/theora/parameter_descriptions"/>
+    <remap from="/iris_0/camera/image_raw/theora/parameter_updates" to="/camera/image_raw/theora/parameter_updates"/>
+    <remap from="/iris_0/camera/parameter_descriptions" to="/camera/parameter_descriptions"/>
+    <remap from="/iris_0/camera/parameter_updates" to="/camera/parameter_updates"/>
+
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="gui" value="$(arg gui)"/>
+		<arg name="world_name" value="$(arg world)"/>
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="verbose" value="$(arg verbose)"/>
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="respawn_gazebo" value="$(arg respawn_gazebo)"/>
+    </include>
+    <arg name="ID" value="0"/>
+    <include file="$(find tutorial_gazebo)/launch/spawn_single.launch">
+        <arg name="ID" value="$(arg ID)"/>
+        <arg name="sdf" value="$(arg sdf)"/>
+        <arg name="interactive" value="$(arg interactive)"/>
+        <arg name="vehicle" value="$(arg vehicle)"/>
+        <arg name="respawn_mavros" value="$(arg respawn_mavros)"/>
+        <arg name="frame" value="iris_$(arg ID)"/>
+        <arg name="x" default="0"/>
+        <arg name="y" default="0"/>
+        <arg name="z" default="0.185"/>
+        <arg name="R" default="0"/>
+        <arg name="P" default="0"/>
+        <arg name="Y" default="0"/>
+    </include>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tutorial_gazebo)/rviz/loam_livox.rviz"/>
+    <node pkg="tutorial_gazebo" type="model_pose_gt.py" name="model_pose_gt"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>
+</launch>

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- 实物靶标（黑环+灰环(+绿环)+中心白盘，无红点）的靶心检测 -->
+    <!-- 输出 target_center_diff (Vector3)，与 center_red_dot_distance_node 接口一致 -->
+
+    <arg name='run_driver' default='false'/>
+    <arg name='show_image' default='false'/>
+    <arg name='pubImg' default='false'/>
+
+    <include file="$(find tutorial_vision_feng)/launch/simple_camera_driver.launch" if="$(arg run_driver)"/>
+
+    <node pkg="tutorial_vision_feng" type="white_center_target_detector.py"
+          name="white_center_target_detector" output="screen">
+        <param name="camera_topic" value="/camera/image_raw"/>
+        <param name="show_image" value="$(arg show_image)"/>
+        <param name="pubImg" value="$(arg pubImg)"/>
+
+        <!-- 白色阈值：V 阈值 = max(white_val_min, white_val_ratio * 画面V的99.5分位)
+             亮度自适应，仿真(白盘V≈138)和实物(白盘V≈230)用同一套参数 -->
+        <param name="white_sat_max" value="100"/>
+        <param name="white_val_min" value="60"/>
+        <param name="white_val_ratio" value="0.70"/>
+
+        <!-- 白盘尺寸门限（Ø0.2 m：1.2 m 高约 167 px 直径，0.8 m 高约 251 px） -->
+        <param name="min_area" value="300"/>
+        <param name="min_radius" value="8"/>
+        <param name="min_circularity" value="0.60"/>
+        <param name="min_circle_fill" value="0.75"/>
+        <param name="gaussian_blur_size" value="5"/>
+
+        <!-- 环带校验：白盘外侧一圈必须明显更暗（灰环/黑环）；现场若绿环反光弱就保持 require_green_ring=false -->
+        <param name="use_ring_validation" value="true"/>
+        <param name="ring_inner_scale" value="1.15"/>
+        <param name="ring_outer_scale" value="1.90"/>
+        <param name="ring_dark_ratio" value="0.80"/>
+        <!-- or: 更暗或绿色任一满足（仿真绿环 + 实物灰环都能用）；dark: 只认更暗；green: 只认绿环 -->
+        <param name="ring_mode" value="or"/>
+        <param name="require_green_ring" value="false"/>
+        <param name="ring_green_ratio_min" value="0.20"/>
+
+        <!-- 多个白盘同时在画面里时：best=环带对比最强的, largest=面积最大的（离得最近） -->
+        <param name="select" value="best"/>
+    </node>
+</launch>

@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="pole_x" default="4.3"/>
+    <arg name="pole_y" default="0"/>
+    <arg name="desired_radius" default="1"/>
+    <arg name="desired_height" default="1"/>
+    <arg name="angular_speed" default="0.7"/>
+    <arg name="takeoff_height" default="1"/>
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+    <!-- 
+        sim 参数的作用：通过 $(optenv GAZEBO_SIMULATION false) 获取环境变量 GAZEBO_SIMULATION，用于判断当前是否处于仿真环境。
+        如果环境变量 GAZEBO_SIMULATION 存在且为 true，则 sim 为 true，否则为 false。
+
+        dont_run_mavros 参数：默认等于 sim，也就是说如果处于仿真环境，则 dont_run_mavros 为 true，此时 mavros.launch 不会被执行。
+        这样能够避免在仿真环境下重复启动或不必要地启动 MAVROS。
+    -->
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+    <arg name="run_mavros" default="$(eval not arg('sim'))"/>
+    <arg name="run_fast_lio" default="true"/>
+    
+    <!-- PID控制参数 -->
+    <arg name="kp_dist" default="5"/>
+    <arg name="ki_dist" default="0"/>
+    <arg name="kd_dist" default="2"/>
+
+    <node pkg="tutorial_basic_feng" type="circle_node_feng" name="circle_node" output="screen">
+        <param name="pole_x" value="$(arg pole_x)"/>
+        <param name="pole_y" value="$(arg pole_y)"/>
+        <param name="desired_radius" value="$(arg desired_radius)"/>
+        <param name="desired_height" value="$(arg desired_height)"/>
+        <param name="angular_speed" value="$(arg angular_speed)"/>
+        <param name="takeoff_height" value="$(arg takeoff_height)"/>
+        
+        <!-- PID控制参数 -->
+        <param name="kp_dist" value="$(arg kp_dist)"/>
+        <param name="ki_dist" value="$(arg ki_dist)"/>
+        <param name="kd_dist" value="$(arg kd_dist)"/>
+    </node>
+    <include file="$(find tutorial_basic_feng)/launch/mavros.launch" if="$(arg run_mavros)"/>
+    <include file="$(find tutorial_navigation_feng)/launch/mid360.launch" if="$(arg run_fast_lio)"/>
+</launch>

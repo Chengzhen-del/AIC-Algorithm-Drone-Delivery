@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="target_x" default="1"/>
+    <arg name="target_y" default="0"/>
+    <arg name="target_z" default="1"/>
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+    <arg name="dont_run_mavros" default="$(arg sim)"/>
+    <arg name="run_fast_lio" default="true"/>
+
+    <node pkg="tutorial_basic_feng" type="vel_control_node_feng" name="takeoff_node" output="screen">
+        <param name="target_x" value="$(arg target_x)"/>
+        <param name="target_y" value="$(arg target_y)"/>
+        <param name="target_z" value="$(arg target_z)"/>
+    </node>
+    <include file="$(find tutorial_basic_feng)/launch/mavros.launch" unless="$(arg dont_run_mavros)"/>
+    <include file="$(find tutorial_navigation_feng)/launch/mid360.launch" if="$(arg run_fast_lio)"/>
+    <include file="$(find ego_planner)/launch/run_in_real.launch"/>
+    <node pkg="tutorial_navigation_feng" type="planner_node" name="planner_node" output="screen"/>
+</launch>

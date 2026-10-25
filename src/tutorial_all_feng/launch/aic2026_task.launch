@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<launch>
+    <!--
+      AIC2026 任务启动（飞机官方tutorials框架 + 今年策略，单包交付）
+
+      自动区分仿真/真机：
+        飞机  ：GAZEBO_SIMULATION 未设置 → sim=false → 启动全套真机底层
+        虚拟机：source ~/aic_env.bash（GAZEBO_SIMULATION=1）→ 只启动任务节点
+                （虚拟机的 mavros/FAST-LIO/视觉/舵机 由 ~/fastlio_sim.sh 提供）
+
+      注意：条件全部用 unless/if + 字面量，不用 $(eval)（本机 roslaunch 的
+      $(eval) 对环境变量取值不可靠，已实测踩坑）。
+    -->
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+
+    <!-- ============ 真机底层（飞机官方包，2025实机验证过的配置） ============ -->
+    <!-- MAVROS：官方 /dev/ttyACM0:57600 -->
+    <include file="$(find tutorial_basic_feng)/launch/mavros.launch" unless="$(arg sim)"/>
+    <!-- 雷达+FAST-LIO+odom转发+TF：官方 mid360.launch（依赖 fast_lio/livox_ros_driver2） -->
+    <include file="$(find tutorial_navigation_feng)/launch/mid360.launch" unless="$(arg sim)"/>
+    <!-- 舵机投放驱动 -->
+    <include file="$(find tutorial_catapult)/launch/catapult_driver.launch" unless="$(arg sim)"/>
+    <!-- 下视USB相机 -->
+    <include file="$(find tutorial_vision_feng)/launch/simple_camera_driver.launch" unless="$(arg sim)"/>
+
+    <!-- 环心检测：官方节点 + 2026-10-23 新场地参数
+         环心标称 (-3.28,-1.19,1.6)（环前(-3.28,-0.75)环后(-3.28,-1.62)中点推算），
+         ROI x±1.0 y±1.0 z[1.4,1.8]防采到环上沿
+         旧场地 ROI: x[-4.3,-2.3] y[-2.3,-0.3] z[1.4,1.8] -->
+    <node pkg="tutorial_navigation_feng" type="ring_center_detect_node_feng" name="ring_center_detect" output="screen" unless="$(arg sim)">
+        <param name="x_min" value="-4.28"/>
+        <param name="x_max" value="-2.28"/>
+        <param name="y_min" value="-2.19"/>
+        <param name="y_max" value="-0.19"/>
+        <param name="z_min" value="1.2"/>
+        <param name="z_max" value="1.8"/>
+        <param name="max_history_size" value="8"/>
+    </node>
+
+    <!-- 视觉识别（投放靶+H点）：订阅 /camera/image_raw，发布 /aic/vision/*
+         仿真下由 aic_fastlio.launch 提供，这里不重复启动 -->
+    <node pkg="tutorial_all_feng" type="vision_detector.py" name="vision_detector" output="screen" unless="$(arg sim)"/>
+
+    <!-- ============ 任务主节点（今年的策略层） ============ -->
+    <node pkg="tutorial_all_feng" type="aic_mission.py" name="aic_mission" output="screen"/>
+</launch>

@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Servo angle parameters -->
+    <arg name="back_right_open_angle" default="180"/>
+    <arg name="back_right_close_angle" default="30"/>
+    <arg name="back_right_half_angle" default="60"/>
+    
+    <arg name="back_left_open_angle" default="0"/>
+    <arg name="back_left_close_angle" default="149"/>
+    <arg name="back_left_half_angle" default="119"/>
+    
+    <arg name="front_right_open_angle" default="0"/>
+    <arg name="front_right_close_angle" default="149"/>
+    <arg name="front_right_half_angle" default="119"/>
+    
+    <arg name="front_left_open_angle" default="180"/>
+    <arg name="front_left_close_angle" default="30"/>
+    <arg name="front_left_half_angle" default="60"/>
+    
+    <!-- Serial connection to Arduino (不标 required：没插舵机板时 clean exit 不拖垮整个 launch) -->
+    <node pkg="rosserial_python" type="serial_node.py" name="serial_node" output="screen">
+        <param name="port" value="/dev/ttyUSB0"/>
+        <param name="baud" value="57600"/>
+    </node>
+
+    <node pkg="tutorial_catapult" type="catapult_driver" name="catapult_driver" output="screen">
+        <param name="back_right_open_angle" value="$(arg back_right_open_angle)"/>
+        <param name="back_right_close_angle" value="$(arg back_right_close_angle)"/>
+        <param name="back_right_half_angle" value="$(arg back_right_half_angle)"/>
+        
+        <param name="back_left_open_angle" value="$(arg back_left_open_angle)"/>
+        <param name="back_left_close_angle" value="$(arg back_left_close_angle)"/>
+        <param name="back_left_half_angle" value="$(arg back_left_half_angle)"/>
+        
+        <param name="front_right_open_angle" value="$(arg front_right_open_angle)"/>
+        <param name="front_right_close_angle" value="$(arg front_right_close_angle)"/>
+        <param name="front_right_half_angle" value="$(arg front_right_half_angle)"/>
+        
+        <param name="front_left_open_angle" value="$(arg front_left_open_angle)"/>
+        <param name="front_left_close_angle" value="$(arg front_left_close_angle)"/>
+        <param name="front_left_half_angle" value="$(arg front_left_half_angle)"/>
+    </node>
+</launch> 

@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="working_altitude" default="1.45"/>
+    <arg name="drop_altitude" default="0.05"/>
+    <arg name="circle_laps" default="10"/>
+    <arg name="pubImg" default="false"/>
+    <arg name="run_viewer" default="false"/>
+
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+    <arg name="run_mavros" default="$(eval not arg('sim'))"/>
+    <arg name="run_catapult_driver" default="$(eval not arg('sim'))"/>
+    <arg name="run_camera_driver" default="$(eval not arg('sim'))"/>
+
+    <arg name="run_fast_lio" default="true"/>
+    <arg name="run_control_node" default="true"/>
+    
+    <!-- 实物靶标无红心（黑环+灰环+中心白盘）用白盘靶心检测；若换成有红点的靶标可换回
+         center_red_dot_distance_node.launch -->
+    <include file="$(find tutorial_vision_feng)/launch/white_center_target_detector.launch">
+        <arg name="run_driver" value="false"/>
+        <arg name="show_image" value="false"/>
+    </include>
+    <include file="$(find tutorial_navigation_feng)/launch/ring_center_detect.launch"/>
+    <!-- 实时避障：点云 -> 机体安全气泡 -> /safety/stop + /safety/clearance
+         任务节点(run_aic2025)会用它做速度级矫正：净空不足就地悬停 / 减速 / 朝空侧让开 -->
+    <node pkg="tutorial_navigation_feng" type="obstacle_guard.py" name="obstacle_guard" output="screen">
+        <param name="cloud_type" value="livox"/>       <!-- 实机/仿真都是 MID360 原始点云 -->
+        <param name="cloud_topic" value="/livox/lidar"/>
+        <param name="body_radius" value="0.30"/>       <!-- 机体半径（含桨），按实际改 -->
+        <param name="range_max" value="1.60"/>         <!-- 安全气泡半径 -->
+        <param name="band_down" value="-0.45"/>        <!-- 气泡下边界（机体坐标 z） -->
+        <param name="band_up" value="0.35"/>
+        <param name="floor_margin" value="0.25"/>      <!-- 离地这么近的点视为地面，忽略 -->
+        <param name="stop_clearance" value="0.25"/>    <!-- 净空低于此值 -> stop -->
+        <param name="release_clearance" value="0.35"/> <!-- 迟滞，避免临界抖动 -->
+        <param name="warn_clearance" value="0.90"/>    <!-- 低于此值开始限速/让开 -->
+    </node>
+    <include file="$(find tutorial_basic_feng)/launch/mavros.launch" if="$(arg run_mavros)"/>
+    <include file="$(find tutorial_navigation_feng)/launch/mid360.launch" if="$(arg run_fast_lio)"/>
+    <include file="$(find tutorial_catapult)/launch/catapult_driver.launch" if="$(arg run_catapult_driver)"/>
+    <include file="$(find tutorial_vision_feng)/launch/simple_camera_driver.launch" if="$(arg run_camera_driver)"/>
+
+    <node pkg="tutorial_feng" type="run_aic2025.py" name="run_aic2025" output="screen" if="$(arg run_control_node)">
+        <!-- Flight parameters -->
+        <param name="fly_height" value="$(arg working_altitude)" />
+        <param name="circle_count" value="$(arg circle_laps)" />
+        <param name="drop_altitude" value="$(arg drop_altitude)" />
+        
+        <!-- Drop point circle configuration (which circle to drop at each point) -->
+        <param name="drop_point1_circle" value="10" />  <!-- Drop at point 1 during circle 1 -->
+        <param name="drop_point2_circle" value="10" />  <!-- Drop at point 2 during circle 1 -->
+        <param name="drop_point3_circle" value="10" />  <!-- Drop at point 3 during circle 2 -->
+        <param name="drop_point4_circle" value="10" />  <!-- Drop at point 4 during circle 2 -->
+        
+        <!-- Drop item configuration (which servo to use at each drop point) -->
+        <!-- front_left, front_right, back_left, back_right -->
+        <param name="drop_point1_item" value="front_left" />
+        <param name="drop_point2_item" value="front_right" />
+        <param name="drop_point3_item" value="back_left" />
+        <param name="drop_point4_item" value="back_right" />
+
+        <param name="front_left_offset_x" value="-0.115" />
+        <param name="front_left_offset_y" value="-0.03" />
+        <param name="front_right_offset_x" value="-0.115" />
+        <param name="front_right_offset_y" value="0.03" />
+        <param name="back_left_offset_x" value="-0.065" />
+        <param name="back_left_offset_y" value="-0.03" />
+        <param name="back_right_offset_x" value="-0.065" />
+        <param name="back_right_offset_y" value="0.03" />
+
+        <!-- 缓起缓降（高度斜坡：限速 + 限加速，接近目标自动减速） -->
+        <param name="takeoff_speed" value="1.0"/>    <!-- 起飞最大垂直速度 m/s -->
+        <param name="takeoff_accel" value="0.6"/>    <!-- 起飞垂直加速度 m/s²，越小越柔和 -->
+        <param name="takeoff_tolerance" value="0.05"/>
+        <param name="land_speed" value="0.4"/>       <!-- 降落最大垂直速度 m/s -->
+        <param name="land_accel" value="0.3"/>       <!-- 降落垂直加速度 m/s² -->
+        <param name="land_handover_alt" value="0.25"/><!-- 缓降到该高度后交飞控 AUTO.LAND -->
+
+        <!-- 视觉对齐：require_vision_align=true 时，只有真的检测到靶标并稳定在阈值内才判定对齐；
+             检测不到会一直找到 visual_alignment_timeout(秒) 超时为止（再按当前位置投放），
+             不会像以前那样"没反馈=完美对齐"静默跳过视觉修正 -->
+        <param name="require_vision_align" value="true"/>
+        <param name="visual_error_threshold" value="80"/>
+        <param name="visual_stable_duration" value="0.5"/>
+        <param name="visual_alignment_timeout" value="3.0"/>
+
+        <!-- 实时避障速度层（配合上面的 obstacle_guard；safety_enable=false 可整体关掉） -->
+        <param name="safety_enable" value="true"/>
+
+        <!-- 前馈避障：把固定柱子的位置做成 keep-out 圆 [x, y, 外接半径]，
+             航段直线若穿过圆就自动插入绕行中间点（净空不够时才绕，直线安全时行为不变）
+             柱子在 aic2025 场地: (-2.5,1.3) (2.5,1.3) (2.5,-1.3)，0.6x0.6 外接半径≈0.42 -->
+        <rosparam param="keepout_circles">
+            [[-2.5, 1.3, 0.42],      <!-- 三根柱子：路过时躲 -->
+             [2.5, 1.3, 0.42],
+             [2.5, -1.3, 0.42],
+             <!-- 地面投放靶（默认不启用）。第 4 项 = 1 表示 transit_only：只在"路过"时躲，
+                  目标点本身在靶里时不禁用（保证还能飞进去投放）。
+                  实测结论：两个柱子间距只有 2.6 m，矩形下边本来就要从夹柱走廊穿过，
+                  再把 4 个靶当禁飞区会让通道不可行 —— 余量会被自动收紧到下限
+                  (0.12 m)，最紧柱净空反而掉到 -0.29 m。靶是地面标记、巡航 1.2 m 从上面
+                  飞过本来无害，所以默认关掉；真要启用请先加高巡航或改小矩形航线。
+             [3.3, 0.0, 0.45, 1],
+             [0.0, 2.2, 0.45, 1],
+             [-3.3, 0.0, 0.45, 1],
+             [0.0, -2.2, 0.45, 1] -->
+            ]
+        </rosparam>
+        <param name="keepout_margin" value="0.35"/>       <!-- 绕行半径 = 外接半径 + 机体 + 该余量 -->
+        <param name="keepout_margin_floor" value="0.12"/>  <!-- 通道太窄时自动收紧的下限 -->
+        <param name="keepout_body_radius" value="0.30"/>
+        <!-- 场地边界（外墙/围网）：绕行点自动收进框内并留 wall_margin -->
+        <param name="field_enabled" value="true"/>
+        <param name="field/x_min" value="-4.6"/>
+        <param name="field/x_max" value="4.6"/>
+        <param name="field/y_min" value="-3.1"/>
+        <param name="field/y_max" value="3.1"/>
+        <param name="wall_margin" value="0.35"/>
+        <param name="safety_stop_clearance" value="0.25"/>
+        <param name="safety_slow_clearance" value="0.90"/>
+        <param name="safety_escape_speed" value="0.25"/>   <!-- 横移让开速度 m/s -->
+        <param name="safety_fail_safe" value="false"/>     <!-- 无点云数据时: false 放行 / true 悬停 -->
+    </node>
+    <node pkg="smach_viewer" type="smach_viewer.py" name="smach_viewer" if="$(arg run_viewer)"/>
+</launch>

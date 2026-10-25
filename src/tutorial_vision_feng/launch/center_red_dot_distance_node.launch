@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name='run_driver' default='false'/>
+    <arg name='show_image' default='false'/>
+    <!-- Red Dot Detection Node -->
+    <include file="$(find tutorial_vision_feng)/launch/simple_camera_driver.launch" if="$(arg run_driver)"/>
+    <node pkg="tutorial_vision_feng" type="center_red_dot_distance_node.py" name="center_red_dot_distance_node" output="screen">
+        
+        <!-- Camera Topic -->
+        <param name="camera_topic" value="/camera/image_raw" />
+        
+        <!-- Display Parameters -->
+        <param name="show_image" value="$(arg show_image)" />
+        
+        <!-- Red Color Detection Parameters -->
+        <param name="red_hue_low1" value="0" />
+        <param name="red_hue_high1" value="10" />
+        <param name="red_hue_low2" value="170" />
+        <param name="red_hue_high2" value="180" />
+        <param name="red_sat_low" value="50" />
+        <param name="red_val_low" value="50" />
+        
+        <!-- White Color Detection Parameters -->
+        <param name="white_sat_max" value="20" />
+        <param name="white_val_min" value="220" />
+        <param name="white_threshold" value="0.3" />
+        
+        <!-- Detection Parameters -->
+        <param name="min_contour_area" value="10" />
+        <param name="use_white_validation" value="true" />
+        <param name="auto_fallback" value="true" />
+        
+        <!-- Image Processing Parameters -->
+        <param name="gaussian_blur_size" value="1" />
+        
+        
+    </node>
+    
+</launch>

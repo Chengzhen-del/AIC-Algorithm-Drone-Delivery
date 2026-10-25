@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+
+    <arg name="run_mavros" default="$(eval not arg('sim'))"/>
+    <arg name="run_fast_lio" default="true"/>
+
+    <include file="$(find tutorial_basic_feng)/launch/mavros.launch" if="$(arg run_mavros)"/>
+    <include file="$(find tutorial_navigation_feng)/launch/mid360.launch" if="$(arg run_fast_lio)"/>
+
+    <!-- 启动圆环中心检测节点 -->
+    <node pkg="tutorial_navigation_feng" type="ring_center_detect_node_feng" name="ring_center_detect_node">
+        <!-- 设置点云过滤范围参数 -->
+        <param name="x_min" value="4.8" />
+        <param name="x_max" value="7.2" />
+        <param name="y_min" value="-1.7" />
+        <param name="y_max" value="-1.5" />
+        <param name="z_min" value="1.5" />
+        <param name="z_max" value="1.7" />
+        <!-- 设置累积帧数 -->
+        <param name="max_history_size" value="10" />
+    </node>
+    
+    <!-- 启动圆环穿越任务节点 -->
+    <node pkg="tutorial_navigation_feng" type="ring_pass_through_node_feng" name="ring_pass_through_node" output="screen">
+    </node>
+</launch> 

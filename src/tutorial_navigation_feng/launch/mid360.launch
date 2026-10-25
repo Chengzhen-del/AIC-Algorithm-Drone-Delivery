@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- 自动检测: GAZEBO_SIMULATION 环境变量在仿真环境中需要设置为 true -->
+    <arg name="sim" default="$(optenv GAZEBO_SIMULATION false)"/>
+    <arg name="rviz" default="false"/>
+    <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch" unless="$(arg sim)"/>
+    <include file="$(find tutorial_navigation_feng)/launch/mapping_mid360.launch">
+        <arg name="rviz" value="$(arg rviz)"/>
+    </include>
+    <node pkg="tutorial_navigation_feng" type="odom_forward_node_feng" name="odom_forward_node"/>
+    <node pkg="tf" type="static_transform_publisher" name="tf_body_to_base_link_broadcaster" args="0 0 0 0 0 0 1 body base_link 100" />
+    <node pkg="tf" type="static_transform_publisher" name="tf_odom_to_camera_init_broadcaster" args="0 0 0 0 0 0 1 odom camera_init 100" />
+    <node pkg="tf" type="static_transform_publisher" name="tf_map_to_odom_broadcaster" args="0 0 0 0 0 0 1 map odom 100" />
+</launch>
