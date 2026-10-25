@@ -1,4 +1,4 @@
-# 🛩️ 2026 AIC 无人机配送 —— 优化版实机代码（feng_ws）
+# 🛩️ 2026 AIC 无人机配送 
 
 > **ROS 1 · MAVROS OFFBOARD · Livox Mid-360 + FAST-LIO 视觉惯性定位 · 无人机精准配送**
 
